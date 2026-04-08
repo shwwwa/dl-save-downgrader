@@ -28,6 +28,14 @@ dropZone.addEventListener("drop", (e) => {
     status.textContent = `Selected: ${selectedFile.name}`;
 });
 
+function isValidGzip(data) {
+    return data[0] === 0x1f && data[1] === 0x8b;
+}
+
+function getMode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+}
+
 function processFile() {
     if (!selectedFile) {
         status.textContent = "Please select a file.";
@@ -42,12 +50,40 @@ function processFile() {
         try {
             const compressed = new Uint8Array(e.target.result);
 
-            let decompressed = pako.ungzip(compressed);
+            if (!isValidGzip(compressed)) {
+                status.textContent = "❌ Invalid .sav file (not gzip).";
+                return;
+            }
+
+            let decompressed;
+            try {
+                decompressed = pako.ungzip(compressed);
+            } catch {
+                status.textContent = "❌ Failed to decompress file.";
+                return;
+            }
+
+            if (decompressed.length < 0x31) {
+                status.textContent = "❌ File too small / corrupted.";
+                return;
+            }
+
+            const mode = getMode();
+            let changes = 0;
 
             for (let i = 0; i <= 0x30; i++) {
-                if (decompressed[i] === 0x43) {
+                if (mode === "downgrade" && decompressed[i] === 0x43) {
                     decompressed[i] = 0x42;
+                    changes++;
+                } else if (mode === "restore" && decompressed[i] === 0x42) {
+                    decompressed[i] = 0x43;
+                    changes++;
                 }
+            }
+
+            if (changes === 0) {
+                status.textContent = "No matching bytes found. File may already be in target version.";
+                return;
             }
 
             const recompressed = pako.gzip(decompressed);
@@ -57,14 +93,15 @@ function processFile() {
 
             const a = document.createElement("a");
             a.href = url;
+
             a.download = selectedFile.name;
             a.click();
 
-            status.textContent = "Done! File downloaded.";
+            status.textContent = `Done! ${changes} bytes modified.`;
 
         } catch (err) {
             console.error(err);
-            status.textContent = "Error processing file.";
+            status.textContent = "Unexpected error.";
         }
     };
 

@@ -8,17 +8,28 @@
 <body>
 
 <div class="container">
-  <h1>Save Downgrader</h1>
-  <p>Drag & Drop your .sav file to downgrade it automatically from 1.55 to 1.47</p>
+    <h1>Save Converter</h1>
+    <p>Drag & drop your .sav file</p>
 
-  <div id="dropZone">
-    <p>Drop file here</p>
-    <input type="file" id="fileInput" accept=".sav">
-  </div>
+    <div id="dropZone">
+        <p>Drop file here</p>
+        <input type="file" id="fileInput" accept=".sav">
+    </div>
 
-  <button onclick="processFile()">Convert</button>
+    <div class="modes">
+        <label>
+            <input type="radio" name="mode" value="downgrade" checked>
+            Downgrade
+        </label>
+        <label>
+            <input type="radio" name="mode" value="restore">
+            Restore 1.51
+        </label>
+    </div>
 
-  <p id="status"></p>
+    <button onclick="processFile()">Convert</button>
+
+    <p id="status"></p>
 </div>
 
 <script src="script.js"></script>

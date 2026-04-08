@@ -57,3 +57,12 @@ button:hover {
     margin-top: 20px;
     font-weight: bold;
 }
+
+.modes {
+    margin: 15px;
+}
+
+.modes label {
+    margin: 0 10px;
+    cursor: pointer;
+}
