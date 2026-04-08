@@ -1,40 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <title>Save Downgrader</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  </head>
+  <body>
 
-<div class="container">
-    <h1>Save Converter</h1>
-    <p>Drag & drop your .sav file</p>
+    <div class="container">
+      <h1>Save Converter</h1>
+      <p>Drag & drop your .sav file</p>
 
-    <div id="dropZone">
+      <div id="dropZone">
         <p>Drop file here</p>
         <input type="file" id="fileInput" accept=".sav">
+      </div>
+
+      <div class="modes">
+	<label>
+          <input type="radio" name="mode" value="downgrade">
+          Downgrade (C → B)
+	</label>
+	<label>
+          <input type="radio" name="mode" value="restore">
+          Restore 1.51 (B → C)
+	</label>
+      </div>
+
+      <p id="detected"></p>
+      <button onclick="processFile()">Convert</button>
+
+      <p id="status"></p>
     </div>
 
-    <div class="modes">
-        <label>
-            <input type="radio" name="mode" value="downgrade" checked>
-            Downgrade
-        </label>
-        <label>
-            <input type="radio" name="mode" value="restore">
-            Restore 1.51
-        </label>
-    </div>
+    <script src="script.js"></script>
+    <!-- gzip library -->
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 
-    <button onclick="processFile()">Convert</button>
-
-    <p id="status"></p>
-</div>
-
-<script src="script.js"></script>
-<!-- gzip library -->
-<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-
-</body>
+  </body>
 </html>

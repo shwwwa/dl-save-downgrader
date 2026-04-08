@@ -1,14 +1,15 @@
 let selectedFile = null;
+let detectedMode = null;
 
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const status = document.getElementById("status");
+const detectedText = document.getElementById("detected");
 
 dropZone.addEventListener("click", () => fileInput.click());
 
 fileInput.addEventListener("change", (e) => {
-    selectedFile = e.target.files[0];
-    status.textContent = `Selected: ${selectedFile.name}`;
+    handleFile(e.target.files[0]);
 });
 
 dropZone.addEventListener("dragover", (e) => {
@@ -23,22 +24,85 @@ dropZone.addEventListener("dragleave", () => {
 dropZone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropZone.classList.remove("dragover");
-
-    selectedFile = e.dataTransfer.files[0];
-    status.textContent = `Selected: ${selectedFile.name}`;
+    handleFile(e.dataTransfer.files[0]);
 });
 
 function isValidGzip(data) {
     return data[0] === 0x1f && data[1] === 0x8b;
 }
 
-function getMode() {
-    return document.querySelector('input[name="mode"]:checked').value;
+function handleFile(file) {
+    selectedFile = file;
+    status.textContent = `Selected: ${file.name}`;
+    detectVersion(file);
+}
+
+function detectVersion(file) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        try {
+            const compressed = new Uint8Array(e.target.result);
+
+            if (!isValidGzip(compressed)) {
+                status.textContent = "Invalid .sav file.";
+                return;
+            }
+
+            let decompressed = pako.ungzip(compressed);
+
+            let hasC = false;
+            let hasB = false;
+
+            for (let i = 0; i <= 0x30; i++) {
+                if (decompressed[i] === 0x43) hasC = true;
+                if (decompressed[i] === 0x42) hasB = true;
+            }
+
+            const radios = document.querySelectorAll('input[name="mode"]');
+            radios.forEach(r => {
+                r.disabled = true;
+                r.checked = false;
+            });
+
+            if (hasC && !hasB) {
+                detectedMode = "downgrade";
+                enableMode("downgrade");
+                detectedText.textContent = "Detected: 1.51+";
+            } 
+            else if (hasB && !hasC) {
+                detectedMode = "restore";
+                enableMode("restore");
+                detectedText.textContent = "Detected: 1.47";
+            } 
+            else {
+                detectedMode = null;
+                detectedText.textContent = "Unknown version. Cannot convert.";
+                status.textContent = "Cannot determine file version.";
+            }
+
+        } catch {
+            status.textContent = "Failed to read file.";
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+function enableMode(mode) {
+    const radio = document.querySelector(`input[value="${mode}"]`);
+    radio.disabled = false;
+    radio.checked = true;
 }
 
 function processFile() {
     if (!selectedFile) {
-        status.textContent = "Please select a file.";
+        status.textContent = "❌ No file selected.";
+        return;
+    }
+
+    if (!detectedMode) {
+        status.textContent = "❌ Conversion blocked (unknown version).";
         return;
     }
 
@@ -49,41 +113,18 @@ function processFile() {
     reader.onload = function(e) {
         try {
             const compressed = new Uint8Array(e.target.result);
+            let decompressed = pako.ungzip(compressed);
 
-            if (!isValidGzip(compressed)) {
-                status.textContent = "❌ Invalid .sav file (not gzip).";
-                return;
-            }
-
-            let decompressed;
-            try {
-                decompressed = pako.ungzip(compressed);
-            } catch {
-                status.textContent = "❌ Failed to decompress file.";
-                return;
-            }
-
-            if (decompressed.length < 0x31) {
-                status.textContent = "❌ File too small / corrupted.";
-                return;
-            }
-
-            const mode = getMode();
             let changes = 0;
 
             for (let i = 0; i <= 0x30; i++) {
-                if (mode === "downgrade" && decompressed[i] === 0x43) {
+                if (detectedMode === "downgrade" && decompressed[i] === 0x43) {
                     decompressed[i] = 0x42;
                     changes++;
-                } else if (mode === "restore" && decompressed[i] === 0x42) {
+                } else if (detectedMode === "restore" && decompressed[i] === 0x42) {
                     decompressed[i] = 0x43;
                     changes++;
                 }
-            }
-
-            if (changes === 0) {
-                status.textContent = "No matching bytes found. File may already be in target version.";
-                return;
             }
 
             const recompressed = pako.gzip(decompressed);
@@ -94,14 +135,15 @@ function processFile() {
             const a = document.createElement("a");
             a.href = url;
 
-            a.download = selectedFile.name;
+            const suffix = detectedMode === "downgrade" ? "_downgraded" : "_restored";
+            a.download = selectedFile.name.replace(".sav", `${suffix}.sav`);
             a.click();
 
-            status.textContent = `Done! ${changes} bytes modified.`;
+            status.textContent = `✅ Done! ${changes} bytes modified.`;
 
         } catch (err) {
             console.error(err);
-            status.textContent = "Unexpected error.";
+            status.textContent = "❌ Error during processing.";
         }
     };
 
