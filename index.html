@@ -7,13 +7,19 @@
 </head>
 <body>
 
-<h1>Save Downgrader</h1>
-<p>Upload your .sav file to downgrade it automatically from 1.55 to 1.47</p>
+<div class="container">
+  <h1>Save Downgrader</h1>
+  <p>Drag & Drop your .sav file to downgrade it automatically from 1.55 to 1.47</p>
 
-<input type="file" id="fileInput" accept=".sav">
-<button onclick="processFile()">Convert</button>
+  <div id="dropZone">
+    <p>Drop file here</p>
+    <input type="file" id="fileInput" accept=".sav">
+  </div>
 
-<p id="status"></p>
+  <button onclick="processFile()">Convert</button>
+
+  <p id="status"></p>
+</div>
 
 <script src="script.js"></script>
 <!-- gzip library -->

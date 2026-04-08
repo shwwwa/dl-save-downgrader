@@ -1,14 +1,56 @@
 body {
+    background: #181818;
+    color: #e2e2e2;
     font-family: Arial, sans-serif;
     text-align: center;
-    margin-top: 50px;
+    margin: 0;
+}
+
+.container {
+    margin-top: 80px;
+}
+
+h1 {
+    font-size: 2.5em;
+}
+
+#dropZone {
+    border: 2px dashed #334155;
+    border-radius: 12px;
+    padding: 40px;
+    margin: 20px auto;
+    width: 300px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#dropZone:hover {
+    border-color: #38bdf8;
+    background: #1e293b;
+}
+
+#dropZone.dragover {
+    border-color: #22c55e;
+    background: #1e293b;
+}
+
+#fileInput {
+    display: none;
 }
 
 button {
-    margin-top: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
+    background: #38bdf8;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: #0f172a;
+    font-weight: bold;
     cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #0ea5e9;
 }
 
 #status {
